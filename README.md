@@ -1,4 +1,4 @@
-# ICLab 2021
+# ICLab 2021 Spring
 
 ICLab ist ein bekannter Aufgabensatz für Studenten in der Vertiefungsrichtung Digital ASIC Design, der von der National Yang Ming Chiao Tung University zur Verfügung gestellt wird.
 
