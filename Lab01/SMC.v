@@ -12,34 +12,73 @@ module SMC(
     output [9:0] out_n
 );
 
-    wire [9:0] unsorted_id [5:0];
-    wire [9:0] unsorted_gm [5:0];
+    //wire [9:0] unsorted_id [5:0];
+    //wire [9:0] unsorted_gm [5:0];
     
     wire [9:0] sort_in [5:0];
     
     wire [9:0] sorted [5:0];
     wire [9:0] out_elements [2:0];
-     
-    assign unsorted_id[0] = (V_GS_0-1 > V_DS_0) ? V_DS_0*W_0*(2*V_GS_0-V_DS_0-2)/3 : W_0*(V_GS_0-1)*(V_GS_0-1)/3;
-    assign unsorted_id[1] = (V_GS_1-1 > V_DS_1) ? V_DS_1*W_1*(2*V_GS_1-V_DS_1-2)/3 : W_1*(V_GS_1-1)*(V_GS_1-1)/3;
-    assign unsorted_id[2] = (V_GS_2-1 > V_DS_2) ? V_DS_2*W_2*(2*V_GS_2-V_DS_2-2)/3 : W_2*(V_GS_2-1)*(V_GS_2-1)/3;
-    assign unsorted_id[3] = (V_GS_3-1 > V_DS_3) ? V_DS_3*W_3*(2*V_GS_3-V_DS_3-2)/3 : W_3*(V_GS_3-1)*(V_GS_3-1)/3;
-    assign unsorted_id[4] = (V_GS_4-1 > V_DS_4) ? V_DS_4*W_4*(2*V_GS_4-V_DS_4-2)/3 : W_4*(V_GS_4-1)*(V_GS_4-1)/3;
-    assign unsorted_id[5] = (V_GS_5-1 > V_DS_5) ? V_DS_5*W_5*(2*V_GS_5-V_DS_5-2)/3 : W_5*(V_GS_5-1)*(V_GS_5-1)/3;
+	
+	wire [2:0] W [0:5];
+	assign W[0] = W_0;
+	assign W[1] = W_1;
+	assign W[2] = W_2;
+	assign W[3] = W_3;
+	assign W[4] = W_4;
+	assign W[5] = W_5;
+	
+	wire [2:0] V_GS [0:5];
+	assign V_GS[0] = V_GS_0;
+	assign V_GS[1] = V_GS_1;
+	assign V_GS[2] = V_GS_2;
+	assign V_GS[3] = V_GS_3;
+	assign V_GS[4] = V_GS_4;
+	assign V_GS[5] = V_GS_5;
+	
+	wire [2:0] V_DS [0:5];
+	assign V_DS[0] = V_DS_0;
+	assign V_DS[1] = V_DS_1;
+	assign V_DS[2] = V_DS_2;
+	assign V_DS[3] = V_DS_3;
+	assign V_DS[4] = V_DS_4;
+	assign V_DS[5] = V_DS_5;
+	
+	wire [5:0] is_Triode;
+	//wire [2:0] gm_op1 [5:0];
+	wire [2:0] shared_op [5:0];
+	wire [3:0] id_op [5:0];
+	
+	//wire [2:0] op1 [5:0];
+	//wire [2:0] op2 [5:0];
+	wire [3:0] op3 [5:0];
+	genvar idx;
     
-    assign unsorted_gm[0] = (V_GS_0-1 > V_DS_0) ? 2*W_0*V_DS_0/3 : 2*W_0*(V_GS_0-1)/3;
-    assign unsorted_gm[1] = (V_GS_1-1 > V_DS_1) ? 2*W_1*V_DS_1/3 : 2*W_1*(V_GS_1-1)/3;
-    assign unsorted_gm[2] = (V_GS_2-1 > V_DS_2) ? 2*W_2*V_DS_2/3 : 2*W_2*(V_GS_2-1)/3;
-    assign unsorted_gm[3] = (V_GS_3-1 > V_DS_3) ? 2*W_3*V_DS_3/3 : 2*W_3*(V_GS_3-1)/3;
-    assign unsorted_gm[4] = (V_GS_4-1 > V_DS_4) ? 2*W_4*V_DS_4/3 : 2*W_4*(V_GS_4-1)/3;
-    assign unsorted_gm[5] = (V_GS_5-1 > V_DS_5) ? 2*W_5*V_DS_5/3 : 2*W_5*(V_GS_5-1)/3;
+	generate
+		for( idx=0 ; idx<6 ; idx=idx+1 ) begin
+			assign is_Triode[idx] = (V_GS[idx]-1 > V_DS[idx]) ? 1'b1 : 1'b0;
+		end
+	endgenerate
+	
+	generate
+		for( idx=0 ; idx<6 ; idx=idx+1 ) begin
+			assign shared_op[idx] = is_Triode[idx] ? V_DS[idx] : V_GS[idx]-1; // gm and id share V_DS*W and W*(V_GS-1)
+			assign id_op[idx] = is_Triode[idx] ? (2*V_GS[idx]-V_DS[idx]-2) : V_GS[idx]-1;
+		end
+	endgenerate
+	
+	generate
+		for( idx=0 ; idx<6 ; idx=idx+1 ) begin
+			assign op3[idx] = mode[0] ? id_op[idx]: 2'd2;
+		end
+	endgenerate
+	
+	generate
+		for( idx=0 ; idx<6 ; idx=idx+1 ) begin
+			assign sort_in[idx] = W[idx] * shared_op[idx] * op3[idx] / 3;
+		end
+	endgenerate
 
-    assign sort_in[0] = mode[0] ? unsorted_id[0] : unsorted_gm[0];
-    assign sort_in[1] = mode[0] ? unsorted_id[1] : unsorted_gm[1];
-    assign sort_in[2] = mode[0] ? unsorted_id[2] : unsorted_gm[2];
-    assign sort_in[3] = mode[0] ? unsorted_id[3] : unsorted_gm[3];
-    assign sort_in[4] = mode[0] ? unsorted_id[4] : unsorted_gm[4];
-    assign sort_in[5] = mode[0] ? unsorted_id[5] : unsorted_gm[5];
     
     sort SORT (
         .sort_in_0(sort_in[0]), 
